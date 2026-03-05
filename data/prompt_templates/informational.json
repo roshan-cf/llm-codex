@@ -1,0 +1,19 @@
+{
+  "use_case": "informational",
+  "templates": [
+    {
+      "template_id": "info-overview",
+      "version": 1,
+      "title": "Market overview",
+      "prompt": "Provide a concise overview of {primary_domain} in the {industry_template} industry.",
+      "tags": ["top_funnel", "awareness", "baseline"]
+    },
+    {
+      "template_id": "info-faq",
+      "version": 2,
+      "title": "FAQ visibility",
+      "prompt": "List the top unanswered customer questions for {primary_domain} compared to {competitors}.",
+      "tags": ["faq", "longitudinal", "customer_needs"]
+    }
+  ]
+}

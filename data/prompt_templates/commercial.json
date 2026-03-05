@@ -1,0 +1,12 @@
+{
+  "use_case": "commercial",
+  "templates": [
+    {
+      "template_id": "commercial-category-fit",
+      "version": 1,
+      "title": "Category fit",
+      "prompt": "Recommend the best buyer profile for {primary_domain} and explain how it compares to {competitors}.",
+      "tags": ["mid_funnel", "positioning", "comparison"]
+    }
+  ]
+}

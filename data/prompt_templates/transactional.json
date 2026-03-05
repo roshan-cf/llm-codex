@@ -1,0 +1,12 @@
+{
+  "use_case": "transactional",
+  "templates": [
+    {
+      "template_id": "transactional-conversion",
+      "version": 3,
+      "title": "Conversion intent",
+      "prompt": "Generate a purchase-intent summary for {primary_domain} including trust signals and conversion blockers.",
+      "tags": ["bottom_funnel", "conversion", "longitudinal"]
+    }
+  ]
+}
