@@ -35,6 +35,12 @@ function normalizeRun(run) {
   };
 }
 
+function citationBelongsToRun(run, citation) {
+  const domain = (run.domain || '').trim();
+  if (!domain) return false;
+  return citation.includes(domain);
+}
+
 function getDomainQuery() {
   return domainFilter.value && domainFilter.value !== 'all' ? domainFilter.value : '';
 }
@@ -167,7 +173,7 @@ function renderScorecards(data) {
   const visibility = avg(data.map(d => d.visibility || 0));
   const quality = avg(data.map(d => d.quality || 0));
   const mentionRate = data.length ? (data.filter(d => (d.visibility || 0) >= 60).length / data.length) * 100 : 0;
-  const citationShare = data.length ? (data.filter(d => safeArray(d.citations).some(c => c.includes(d.domain || ''))).length / data.length) * 100 : 0;
+  const citationShare = data.length ? (data.filter(d => safeArray(d.citations).some(c => citationBelongsToRun(d, c))).length / data.length) * 100 : 0;
 
   scorecards.innerHTML = [
     ['Visibility Score', visibility.toFixed(1)],
@@ -206,8 +212,8 @@ function drawDonut(data) {
   const canvas = donutChart;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const own = data.reduce((n, r) => n + safeArray(r.citations).filter(c => c.includes(r.domain || '')).length, 0);
-  const comp = data.reduce((n, r) => n + safeArray(r.citations).filter(c => !c.includes(r.domain || '')).length, 0);
+  const own = data.reduce((n, r) => n + safeArray(r.citations).filter(c => citationBelongsToRun(r, c)).length, 0);
+  const comp = data.reduce((n, r) => n + safeArray(r.citations).filter(c => !citationBelongsToRun(r, c)).length, 0);
   const total = Math.max(own + comp, 1);
   const cx = 140;
   const cy = 130;
@@ -282,7 +288,7 @@ function renderProviderComparison(data) {
   providerTableBody.innerHTML = Object.entries(by).map(([provider, rows]) => {
     const v = avg(rows.map(r => r.visibility || 0));
     const q = avg(rows.map(r => r.quality || 0));
-    const share = rows.length ? (rows.filter(r => safeArray(r.citations).some(c => c.includes(r.domain || ''))).length / rows.length) * 100 : 0;
+    const share = rows.length ? (rows.filter(r => safeArray(r.citations).some(c => citationBelongsToRun(r, c))).length / rows.length) * 100 : 0;
     const c = avg(rows.map(r => safeArray(r.citations).length));
     return `<tr><td>${provider}</td><td>${v.toFixed(1)}</td><td>${q.toFixed(1)}</td><td>${share.toFixed(0)}%</td><td>${c.toFixed(1)}</td></tr>`;
   }).join('');
