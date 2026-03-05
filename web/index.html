@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Visibility Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>AI Visibility Dashboard</h1>
+    <p>Track prompt performance, provider deltas, and citation behavior.</p>
+  </header>
+
+  <section class="filters card">
+    <h2>Filters</h2>
+    <div class="filter-grid">
+      <label>Date range
+        <select id="dateRange">
+          <option value="7">Last 7 days</option>
+          <option value="14">Last 14 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+        </select>
+      </label>
+      <label>Provider
+        <select id="providerFilter"><option value="all">All providers</option></select>
+      </label>
+      <label>Prompt set
+        <select id="promptSetFilter"><option value="all">All prompt sets</option></select>
+      </label>
+      <label>Domain
+        <select id="domainFilter"><option value="all">All domains</option></select>
+      </label>
+      <label>Competitor set
+        <select id="competitorFilter"><option value="all">All competitors</option></select>
+      </label>
+    </div>
+  </section>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="prompt-performance">Prompt Performance</button>
+    <button class="tab" data-tab="provider-comparison">Provider Comparison</button>
+    <button class="tab" data-tab="response-inspector">Response Inspector</button>
+  </nav>
+
+  <main>
+    <section id="overview" class="tab-panel active">
+      <div class="metric-grid" id="scorecards"></div>
+      <div class="panel-grid">
+        <article class="card">
+          <h3>Visibility Trend Over Time</h3>
+          <canvas id="trendChart" width="700" height="260"></canvas>
+        </article>
+        <article class="card">
+          <h3>Citation Share</h3>
+          <div class="chart-row">
+            <canvas id="donutChart" width="300" height="260"></canvas>
+            <canvas id="barChart" width="360" height="260"></canvas>
+          </div>
+        </article>
+      </div>
+      <article class="card">
+        <h3>Insight Cards</h3>
+        <div id="insights" class="insight-grid"></div>
+      </article>
+    </section>
+
+    <section id="prompt-performance" class="tab-panel">
+      <article class="card">
+        <h3>Prompt Performance Table</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Prompt</th>
+              <th>Provider</th>
+              <th>Visibility</th>
+              <th>Quality</th>
+              <th>Citations</th>
+            </tr>
+          </thead>
+          <tbody id="promptTableBody"></tbody>
+        </table>
+      </article>
+      <article class="card">
+        <h3>Prompt-level Heatmap by Provider</h3>
+        <div id="heatmap" class="heatmap"></div>
+      </article>
+    </section>
+
+    <section id="provider-comparison" class="tab-panel">
+      <article class="card">
+        <h3>Provider Comparison View</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Provider</th>
+              <th>Avg Visibility</th>
+              <th>Avg Quality</th>
+              <th>Share of Voice</th>
+              <th>Avg Citations</th>
+            </tr>
+          </thead>
+          <tbody id="providerTableBody"></tbody>
+        </table>
+      </article>
+    </section>
+
+    <section id="response-inspector" class="tab-panel">
+      <article class="card">
+        <h3>Response Inspector</h3>
+        <label>Run
+          <select id="runSelector"></select>
+        </label>
+        <h4>Raw Output</h4>
+        <pre id="rawOutput"></pre>
+        <h4>Parsed Citations</h4>
+        <ul id="citationList"></ul>
+      </article>
+    </section>
+  </main>
+
+  <footer class="card">
+    <h3>Export Run-level Data</h3>
+    <div class="actions">
+      <button id="exportCsv">Export CSV</button>
+      <button id="exportJson">Export JSON</button>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
