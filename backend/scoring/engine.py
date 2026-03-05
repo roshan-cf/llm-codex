@@ -7,10 +7,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from time import perf_counter
 from difflib import SequenceMatcher
 import math
 import re
 from typing import Any, Callable, Iterable
+
+from backend.observability import Observability
 
 
 TokenSet = set[str]
@@ -169,6 +172,7 @@ def compute_intent_match(
     response_text: str,
     expected_intent: str,
     llm_classifier: Callable[[str, str], dict[str, Any]] | None = None,
+    observability: Observability | None = None,
 ) -> dict[str, Any]:
     """Compute intent match from deterministic checks + optional LLM classifier."""
 
@@ -191,10 +195,14 @@ def compute_intent_match(
     llm_confidence = 0.0
     llm_score = 0.0
     if llm_classifier:
-        result = llm_classifier(prompt_text, response_text) or {}
-        llm_label = _normalize_text(str(result.get("label", "")))
-        llm_confidence = float(result.get("confidence", 0.0) or 0.0)
-        llm_score = llm_confidence if llm_label == expected else 0.0
+        try:
+            result = llm_classifier(prompt_text, response_text) or {}
+            llm_label = _normalize_text(str(result.get("label", "")))
+            llm_confidence = float(result.get("confidence", 0.0) or 0.0)
+            llm_score = llm_confidence if llm_label == expected else 0.0
+        except Exception:
+            if observability:
+                observability.record_parse_failure("intent_classifier")
 
     intent_score = _clip01((deterministic_score * 0.6) + (llm_score * 0.4))
 
@@ -278,8 +286,13 @@ def compute_competitor_comparison_score(
 class ScoringEngine:
     """Computes AI visibility and prompt performance scores with explainability."""
 
-    def __init__(self, config: WorkspaceScoreConfig | None = None) -> None:
+    def __init__(
+        self,
+        config: WorkspaceScoreConfig | None = None,
+        observability: Observability | None = None,
+    ) -> None:
         self.config = config or WorkspaceScoreConfig()
+        self.observability = observability
 
     def score(
         self,
@@ -297,6 +310,7 @@ class ScoringEngine:
         run_seed: int | None = None,
         llm_classifier: Callable[[str, str], dict[str, Any]] | None = None,
     ) -> ScoreSnapshot:
+        start = perf_counter()
         domain_metrics = detect_domain_mentions(response_text, domains)
         citation_metrics = detect_citations(response_text)
 
@@ -314,6 +328,7 @@ class ScoringEngine:
             response_text=response_text,
             expected_intent=expected_intent,
             llm_classifier=llm_classifier,
+            observability=self.observability,
         )
         relevance_metrics = compute_brand_topic_relevance(
             response_text=response_text,
@@ -369,8 +384,11 @@ class ScoringEngine:
             },
         }
 
-        return ScoreSnapshot(
+        snapshot = ScoreSnapshot(
             ai_visibility_score=ai_visibility_score,
             prompt_performance_score=prompt_performance_score,
             details_json=details_json,
         )
+        if self.observability:
+            self.observability.record_scoring_duration((perf_counter() - start) * 1000)
+        return snapshot
