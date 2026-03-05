@@ -1,0 +1,12 @@
+{
+  "use_case": "brand_comparison",
+  "templates": [
+    {
+      "template_id": "brand-head-to-head",
+      "version": 1,
+      "title": "Head-to-head benchmark",
+      "prompt": "Compare {primary_domain} against {competitors} on pricing perception, trust, and differentiation.",
+      "tags": ["brand", "competitive", "share_of_voice"]
+    }
+  ]
+}
