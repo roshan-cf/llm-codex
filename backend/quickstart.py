@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable, Dict, List
 
+from backend.content_ingest import URLAnalyzer
 from backend.onboarding import OnboardingState
 from backend.prompt_library import PromptLibrary, PromptTemplate
 
@@ -25,8 +26,13 @@ class FirstRunResult:
 class FirstRunStarter:
     """Runs a minimal prompt pack after onboarding completion."""
 
-    def __init__(self, prompt_library: PromptLibrary | None = None) -> None:
+    def __init__(
+        self,
+        prompt_library: PromptLibrary | None = None,
+        url_analyzer: URLAnalyzer | None = None,
+    ) -> None:
         self.prompt_library = prompt_library or PromptLibrary()
+        self.url_analyzer = url_analyzer or URLAnalyzer()
 
     def run_minimal_prompt_pack(
         self,
@@ -44,9 +50,10 @@ class FirstRunStarter:
             "industry_template": onboarding.industry_template,
             "competitors": ",".join(onboarding.competitors),
         }
+        context.update(self._build_url_context(onboarding.primary_domain))
 
         for template in templates:
-            rendered_prompt = template.prompt.format(**context)
+            rendered_prompt = self._render_prompt(template, context)
             raw = execute_prompt(rendered_prompt, {"provider": default_provider})
             executions.append(
                 PromptExecution(
@@ -57,6 +64,39 @@ class FirstRunStarter:
             )
 
         return FirstRunResult(prompt_pack_name="first_run_minimal", executions=executions)
+
+
+    def _render_prompt(self, template: PromptTemplate, context: Dict[str, str]) -> str:
+        rendered = template.prompt.format(**context)
+        grounding_bits = [
+            f"URL: {context.get('canonical_url', '')}",
+            f"Title: {context.get('page_title', '')}",
+            f"Meta description: {context.get('meta_description', '')}",
+            f"Headings: {context.get('page_headings', '')}",
+            f"Schema hints: {context.get('schema_hints', '')}",
+            f"Visible text: {context.get('page_text_excerpt', '')}",
+        ]
+        grounding = "\n".join(bit for bit in grounding_bits if not bit.endswith(': '))
+        if not grounding:
+            return rendered
+        return f"{rendered}\n\nGrounding context from the target URL:\n{grounding}"
+
+    def _build_url_context(self, primary_domain: str) -> Dict[str, str]:
+        try:
+            analysis = self.url_analyzer.analyze(primary_domain)
+            return analysis.to_prompt_context()
+        except Exception:
+            return {
+                "source_url": "",
+                "canonical_url": "",
+                "hostname": primary_domain,
+                "page_title": "",
+                "meta_description": "",
+                "page_headings": "",
+                "page_text_excerpt": "",
+                "canonical_link": "",
+                "schema_hints": "",
+            }
 
     def _minimal_pack(self) -> List[PromptTemplate]:
         templates = self.prompt_library.load()
